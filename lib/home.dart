@@ -12,6 +12,7 @@ class Home extends StatelessWidget {
         centerTitle: true,
              ),
       body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Container(
             color: Colors.brown[200],
