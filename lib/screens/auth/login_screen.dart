@@ -4,6 +4,7 @@ import '../../theme/app_colors.dart';
 import '../../widgets/coffee_hub_logo.dart';
 import '../../widgets/social_button.dart';
 import '../main_navigation_screen.dart';
+import '../onboarding_screen.dart';
 import 'signup_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -63,11 +64,27 @@ class _LoginScreenState extends State<LoginScreen> {
 
           SafeArea(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  const SizedBox(height: 20),
+                  // Back button to return to Onboarding if skipped accidentally
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: IconButton(
+                      icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+                      onPressed: () {
+                        if (Navigator.of(context).canPop()) {
+                          Navigator.of(context).pop();
+                        } else {
+                          Navigator.of(context).pushReplacement(
+                            MaterialPageRoute(builder: (_) => const OnboardingScreen()),
+                          );
+                        }
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 4),
                   // Logo
                   const CoffeeHubLogo(
                     iconSize: 44,

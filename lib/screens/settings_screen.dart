@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../providers/app_provider.dart';
 import '../theme/app_colors.dart';
 import 'auth/login_screen.dart';
+import 'onboarding_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -58,6 +59,24 @@ class SettingsScreen extends StatelessWidget {
               ),
               onTap: () {
                 _showLanguageSheet(context);
+              },
+            ),
+            const SizedBox(height: 10),
+
+            // App Intro / Onboarding (Replay Onboarding slides)
+            _buildSettingCard(
+              isDark: isDark,
+              icon: Icons.slideshow_rounded,
+              title: 'App Intro / Onboarding',
+              trailing: Icon(
+                Icons.chevron_right_rounded,
+                size: 20,
+                color: isDark ? AppColors.textMutedDark : AppColors.textMutedLight,
+              ),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const OnboardingScreen()),
+                );
               },
             ),
             const SizedBox(height: 10),
