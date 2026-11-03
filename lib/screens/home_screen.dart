@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_provider.dart';
 import '../theme/app_colors.dart';
+import '../services/api_service.dart';
 import '../widgets/popular_item_card.dart';
 import 'cart_screen.dart';
 
@@ -83,12 +84,48 @@ class HomeScreen extends StatelessWidget {
                               const Text('👋', style: TextStyle(fontSize: 16)),
                             ],
                           ),
-                          Text(
-                            'Good morning!',
-                            style: GoogleFonts.poppins(
-                              fontSize: 12,
-                              color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
-                            ),
+                          Row(
+                            children: [
+                              Text(
+                                'Good morning!',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 12,
+                                  color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: ApiService.isConnected
+                                      ? Colors.green.withValues(alpha: 0.12)
+                                      : const Color(0xFFFFA000).withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Container(
+                                      width: 6,
+                                      height: 6,
+                                      decoration: BoxDecoration(
+                                        color: ApiService.isConnected ? Colors.green : const Color(0xFFFFA000),
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      ApiService.isConnected ? 'Backend Live' : 'Connecting...',
+                                      style: TextStyle(
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.w600,
+                                        color: ApiService.isConnected ? Colors.green : const Color(0xFFFFA000),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
