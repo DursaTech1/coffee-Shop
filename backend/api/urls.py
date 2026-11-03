@@ -27,3 +27,4 @@ urlpatterns = [
     # Notifications
     path('notifications/', NotificationListAPIView.as_view(), name='notifications'),
 ]
+

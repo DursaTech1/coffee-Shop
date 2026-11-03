@@ -3,8 +3,13 @@ import '../models/coffee_item.dart';
 import '../models/cart_item.dart';
 import '../models/order.dart';
 import '../models/notification_item.dart';
+import '../services/api_service.dart';
 
 class AppProvider extends ChangeNotifier {
+  AppProvider() {
+    loadDataFromBackend();
+  }
+
   // Theme state
   bool _isDarkMode = false;
   bool get isDarkMode => _isDarkMode;
@@ -24,6 +29,28 @@ class AppProvider extends ChangeNotifier {
     _userName = name;
     _userEmail = email;
     notifyListeners();
+  }
+
+  Future<bool> loginUser(String email, String password) async {
+    final result = await ApiService.login(email, password);
+    if (result != null && result['user'] != null) {
+      _userName = result['user']['name'] ?? _userName;
+      _userEmail = result['user']['email'] ?? email;
+      notifyListeners();
+      return true;
+    }
+    return false;
+  }
+
+  Future<bool> registerUser(String name, String email, String password) async {
+    final result = await ApiService.register(name, email, password);
+    if (result != null && result['user'] != null) {
+      _userName = name;
+      _userEmail = email;
+      notifyListeners();
+      return true;
+    }
+    return false;
   }
 
   // Bottom navigation state
@@ -53,7 +80,7 @@ class AppProvider extends ChangeNotifier {
   }
 
   // Available coffee menu items
-  final List<CoffeeItem> _coffeeCatalog = List.from(dummyCoffeeItems);
+  List<CoffeeItem> _coffeeCatalog = List.from(dummyCoffeeItems);
   List<CoffeeItem> get coffeeCatalog => _coffeeCatalog;
 
   List<CoffeeItem> get filteredMenu {
@@ -143,7 +170,7 @@ class AppProvider extends ChangeNotifier {
   }
 
   // Orders state - pre-populated with mockup history
-  final List<OrderModel> _orders = [
+  List<OrderModel> _orders = [
     OrderModel(
       id: '1023',
       items: [
@@ -193,27 +220,55 @@ class AppProvider extends ChangeNotifier {
   OrderModel? get activeOrder => _activeOrder;
 
   OrderModel placeOrder() {
-    final newOrder = OrderModel(
+    final currentSubtotal = subtotal;
+    final currentDeliveryFee = deliveryFee;
+    final currentTotal = total;
+    final currentAddress = _deliveryAddress;
+    final currentPayment = _paymentMethod;
+    final currentItems = List<CartItem>.from(_cartItems);
+
+    final localOrder = OrderModel(
       id: '${1024 + _orders.length}',
-      items: List.from(_cartItems),
-      subtotal: subtotal,
-      deliveryFee: deliveryFee,
-      total: total,
+      items: currentItems,
+      subtotal: currentSubtotal,
+      deliveryFee: currentDeliveryFee,
+      total: currentTotal,
       orderDate: DateTime.now(),
       dateFormatted: 'Nov 03, 2026',
       status: OrderStatus.outForDelivery,
-      address: _deliveryAddress,
-      paymentMethod: _paymentMethod,
+      address: currentAddress,
+      paymentMethod: currentPayment,
     );
-    _orders.insert(0, newOrder);
-    _activeOrder = newOrder;
+
+    _orders.insert(0, localOrder);
+    _activeOrder = localOrder;
     _cartItems.clear();
     notifyListeners();
-    return newOrder;
+
+    // Async sync to Django backend
+    ApiService.createOrder(
+      items: currentItems,
+      subtotal: currentSubtotal,
+      deliveryFee: currentDeliveryFee,
+      total: currentTotal,
+      address: currentAddress,
+      paymentMethod: currentPayment,
+    ).then((apiOrder) {
+      if (apiOrder != null) {
+        final index = _orders.indexOf(localOrder);
+        if (index != -1) {
+          _orders[index] = apiOrder;
+          _activeOrder = apiOrder;
+          notifyListeners();
+        }
+      }
+    });
+
+    return localOrder;
   }
 
   // Notifications
-  final List<NotificationItem> _notifications = [
+  List<NotificationItem> _notifications = [
     NotificationItem(
       id: '1',
       title: 'Order Delivered',
@@ -240,5 +295,29 @@ class AppProvider extends ChangeNotifier {
     ),
   ];
   List<NotificationItem> get notifications => _notifications;
-}
 
+  // Sync data from Django backend
+  Future<void> loadDataFromBackend() async {
+    try {
+      final remoteCoffees = await ApiService.getCoffees();
+      if (remoteCoffees != null && remoteCoffees.isNotEmpty) {
+        _coffeeCatalog = remoteCoffees;
+        notifyListeners();
+      }
+
+      final remoteOrders = await ApiService.getOrders();
+      if (remoteOrders != null && remoteOrders.isNotEmpty) {
+        _orders = remoteOrders;
+        notifyListeners();
+      }
+
+      final remoteNotifs = await ApiService.getNotifications();
+      if (remoteNotifs != null && remoteNotifs.isNotEmpty) {
+        _notifications = remoteNotifs;
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('Error loading data from Django backend: $e');
+    }
+  }
+}

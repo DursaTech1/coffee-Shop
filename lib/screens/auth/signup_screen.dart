@@ -29,12 +29,17 @@ class _SignUpScreenState extends State<SignUpScreen> {
     super.dispose();
   }
 
-  void _onSignUp() {
+  void _onSignUp() async {
     final provider = Provider.of<AppProvider>(context, listen: false);
-    if (_nameController.text.isNotEmpty && _emailController.text.isNotEmpty) {
-      provider.updateUserProfile(_nameController.text.trim(), _emailController.text.trim());
+    final name = _nameController.text.trim();
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    if (name.isNotEmpty && email.isNotEmpty) {
+      provider.registerUser(name, email, password.isNotEmpty ? password : 'password123');
     }
 
+    if (!mounted) return;
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => const MainNavigationScreen()),
       (route) => false,

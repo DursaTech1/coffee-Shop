@@ -46,3 +46,10 @@ app.*.map.json
 
 # Widget Preview related
 .widget_preview/
+
+# Python / Django related
+**/__pycache__/
+*.py[cod]
+*$py.class
+backend/venv/
+*.sqlite3
