@@ -1,45 +1,35 @@
-import 'package:coffee_card/home.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'providers/app_provider.dart';
+import 'screens/splash_screen.dart';
+import 'theme/app_theme.dart';
+
 void main() {
-  runApp(const MaterialApp(
-    home: Home()
-  ));
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AppProvider()),
+      ],
+      child: const CoffeeHubApp(),
+    ),
+  );
 }
 
-
-class Sandbox extends StatelessWidget {
-  const Sandbox({super.key});
+class CoffeeHubApp extends StatelessWidget {
+  const CoffeeHubApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return  Scaffold(
-      appBar: AppBar(
-        title: Text('Sandbox'),
-        backgroundColor: Colors.grey,
-        centerTitle: true,
-      ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 100,
-            color: Colors.red,
-            child: Text('one'),
-          ),
-          Container(
-            width: 200,
-            color: Colors.green,
-            child: Text('two'),
-          ),
-          Container(
-            width: 300,
-            color: Colors.blue,
-            child: Text('three'),
-          ),
-          
-        ]
-      ),
+    final appProvider = Provider.of<AppProvider>(context);
+
+    return MaterialApp(
+      title: 'CoffeeHub',
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: appProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+      home: const SplashScreen(),
     );
   }
 }
