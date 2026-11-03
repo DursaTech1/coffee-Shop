@@ -5,6 +5,7 @@ import '../providers/app_provider.dart';
 import '../theme/app_colors.dart';
 import 'auth/login_screen.dart';
 import 'onboarding_screen.dart';
+import '../services/api_service.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -59,6 +60,45 @@ class SettingsScreen extends StatelessWidget {
               ),
               onTap: () {
                 _showLanguageSheet(context);
+              },
+            ),
+            const SizedBox(height: 10),
+
+            // Django Backend Status & Configuration
+            _buildSettingCard(
+              isDark: isDark,
+              icon: Icons.cloud_done_outlined,
+              title: 'Backend API',
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: ApiService.isConnected ? Colors.green : const Color(0xFFFFA000),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    ApiService.isConnected ? 'Connected' : 'Configure',
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: ApiService.isConnected ? Colors.green : const Color(0xFFFFA000),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    size: 20,
+                    color: isDark ? AppColors.textMutedDark : AppColors.textMutedLight,
+                  ),
+                ],
+              ),
+              onTap: () {
+                _showBackendConfigDialog(context, provider);
               },
             ),
             const SizedBox(height: 10),
@@ -312,6 +352,97 @@ class SettingsScreen extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showBackendConfigDialog(BuildContext context, AppProvider provider) {
+    final controller = TextEditingController(text: ApiService.baseUrl);
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            title: const Text('Django Backend API'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 10,
+                      height: 10,
+                      decoration: BoxDecoration(
+                        color: ApiService.isConnected ? Colors.green : Colors.red,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      ApiService.isConnected
+                          ? 'Status: Connected (200 OK)'
+                          : 'Status: Disconnected',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: ApiService.isConnected ? Colors.green : Colors.red,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                const Text(
+                  'API URL:',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 6),
+                TextField(
+                  controller: controller,
+                  decoration: const InputDecoration(
+                    hintText: 'e.g. http://10.0.2.2:8000/api',
+                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  '• Emulator: http://10.0.2.2:8000/api\n• Physical Phone: http://<YOUR_PC_IP>:8000/api\n• Web/Desktop: http://127.0.0.1:8000/api',
+                  style: TextStyle(fontSize: 11, color: Colors.grey),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: const Text('Close'),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  if (controller.text.trim().isNotEmpty) {
+                    ApiService.setCustomBaseUrl(controller.text.trim());
+                  }
+                  final ok = await ApiService.checkConnection();
+                  if (ok) {
+                    await provider.loadDataFromBackend();
+                  }
+                  setState(() {});
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(ok
+                            ? '✅ Connected to Django backend!'
+                            : '❌ Could not connect to ${controller.text.trim()}'),
+                        backgroundColor: ok ? Colors.green : Colors.red,
+                      ),
+                    );
+                  }
+                },
+                child: const Text('Test & Sync'),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
